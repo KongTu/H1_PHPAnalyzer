@@ -49,8 +49,8 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
    TChain* tree = new TChain("properties");
    int dis_events = 0;
 
-   tree->Add("/nfs/dust/h1/group/sschmitt/H1_ForwardMultAnalyzer/batch/data06/*.root");
-   tree->Add("/nfs/dust/h1/group/sschmitt/H1_ForwardMultAnalyzer/batch/data07/*.root");
+   tree->Add("/nfs/dust/h1/group/sschmitt/H1_ForwardMultAnalyzer/batch/data_06/*.root");
+   tree->Add("/nfs/dust/h1/group/sschmitt/H1_ForwardMultAnalyzer/batch/data_07/*.root");
 
    //start to define new miniTree:
    TTree *outtree =new TTree("miniTree","miniTree");
@@ -76,8 +76,6 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
    outtree->Branch("trackPtREC_mini",myEvent.trackPtREC_mini,"trackPtREC_mini[nRECtrack_mini]/F");
    outtree->Branch("trackEtaREC_mini",myEvent.trackEtaREC_mini,"trackEtaREC_mini[nRECtrack_mini]/F");
    outtree->Branch("trackPhiREC_mini",myEvent.trackPhiREC_mini,"trackPhiREC_mini[nRECtrack_mini]/F");
-
-   double zvtxOffset=0.;
 
    if(tree) {
    //tree branches      
