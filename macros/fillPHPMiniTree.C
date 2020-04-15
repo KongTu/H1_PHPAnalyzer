@@ -266,16 +266,17 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
          //loop over reconstructed tracks:
          int Ntracks=0;
          for(int iTrk = 0; iTrk<ntrackREC; iTrk++){
-            int type=trackFlagsREC[iTrk];            
-            if(!type) continue;
+            int type=trackFlagsREC[iTrk];
+            int trackpass=1;            
+            if(!type) trackpass=0;
             double pt=TMath::Hypot(trackPxREC[iTrk],trackPyREC[iTrk]);
-            if(pt<0.100) continue; // pt>100 MeV
+            if(pt<0.100) trackpass=0; // pt>100 MeV
             double p=TMath::Hypot(trackPzREC[iTrk],pt);
             double phi=TMath::ATan2(trackPyREC[iTrk],trackPxREC[iTrk]);
             double eta=0.5*TMath::Log((p+trackPzREC[iTrk])/(p-trackPzREC[iTrk]));           
             TVector3 vect;vect.SetPtEtaPhi(pt,eta,phi);
             double theta = vect.Theta();  
-            int trackpass=1;
+            
             if(type==1){//central tracks
                if(TMath::Abs(trackDCAprimeREC[iTrk]*TMath::Sin(theta))>2.0) trackpass=0;
                if( trackStartRadREC[iTrk]>50. ) trackpass=0;
@@ -291,13 +292,7 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
                //don't cut on FST tracks for now.
                trackpass=1;
             }
-            cout << "type " << type << endl;
-            cout << "trackpass " << trackpass << endl;
-            cout << "TMath::Abs(trackDCAprimeREC[iTrk]*TMath::Sin(theta)) " << TMath::Abs(trackDCAprimeREC[iTrk]*TMath::Sin(theta)) << endl;
-            cout << "trackStartRadREC[iTrk] " << trackStartRadREC[iTrk] << endl;
-            cout << "(trackEndRadREC[iTrk]-trackStartRadREC[iTrk]) " << (trackEndRadREC[iTrk]-trackStartRadREC[iTrk]) << endl;
             if( trackpass>=0) myEvent.trackpass_mini[iTrk] = trackpass;
-            
             if( trackpass==1 ){if(TMath::Abs(eta)<2.0) Ntracks++;} 
             myEvent.trackFlagsREC_mini[iTrk] = trackFlagsREC[iTrk];
             myEvent.trackPtREC_mini[iTrk] = pt;
