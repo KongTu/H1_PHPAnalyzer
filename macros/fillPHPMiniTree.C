@@ -278,7 +278,7 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
             int trackpass=1;
             if(type==1){//central tracks
                if(TMath::Abs(trackDCAprimeREC[iTrk]*TMath::Sin(theta))>2.) trackpass=0;
-               if(trackStartRadREC[iTrk]>50.) trackpass=0;
+               if( trackStartRadREC[iTrk]>50. ) trackpass=0;
                if((trackEndRadREC[iTrk]-trackStartRadREC[iTrk])<5.) trackpass=0;
             }
             else if(type==2){//combined tracks
@@ -291,8 +291,11 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
                //don't cut on FST tracks for now.
                trackpass=1;
             }
+            cout << "type " << type << endl;
             cout << "trackpass " << trackpass << endl;
+            cout << "TMath::Abs(trackDCAprimeREC[iTrk]*TMath::Sin(theta)) " << TMath::Abs(trackDCAprimeREC[iTrk]*TMath::Sin(theta)) << endl;
             cout << "trackStartRadREC[iTrk] " << trackStartRadREC[iTrk] << endl;
+            cout << "(trackEndRadREC[iTrk]-trackStartRadREC[iTrk]) " << (trackEndRadREC[iTrk]-trackStartRadREC[iTrk]) << endl;
             myEvent.trackpass_mini[iTrk] = trackpass;
             
             if( trackpass==1 ){if(TMath::Abs(eta)<2.0) Ntracks++;} 
