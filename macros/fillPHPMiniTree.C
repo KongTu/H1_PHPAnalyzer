@@ -57,7 +57,7 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
    MyEvent myEvent;
 
    outtree->Branch("w_mini",&myEvent.w_mini,"w_mini/F");
-   outtree->Branch("primaryVertexFlags_mini",&myEvent.primaryVertexFlags_mini,"primaryVertexFlags_mini/F");
+   outtree->Branch("primaryVertexFlags_mini",&myEvent.primaryVertexFlags_mini,"primaryVertexFlags_mini/I");
    outtree->Branch("vertex_mini",myEvent.vertex_mini,"vertex_mini[3]/F");
    outtree->Branch("haveEtag6Trigger_mini",&myEvent.haveEtag6Trigger_mini,"haveEtag6Trigger_mini/I");
    outtree->Branch("eTag6Energy_mini",&myEvent.eTag6Energy_mini,"eTag6Energy_mini/F");
@@ -234,6 +234,9 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
 
          myEvent.w_mini = weight;
          myEvent.haveEtag6Trigger_mini = haveEtag6Trigger;
+         myEvent.eTag6Energy_mini = eTag6Energy;
+         myEvent.photonTagEnergy_mini = photonTagEnergy;
+         myEvent.primaryVertexFlags_mini = primaryVertexFlags;
          myEvent.vertex_mini[0] = vertex[0];
          myEvent.vertex_mini[1] = vertex[1];
          myEvent.vertex_mini[2] = vertex[2];
@@ -286,9 +289,10 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
             }
             else{
                //don't cut on FST tracks for now.
+               trackpass=1;
             }
-            myEvent.trackpass_mini[iTrk]=trackpass;
-            if( trackpass ){if(TMath::Abs(eta)<2.0) Ntracks++;} 
+            myEvent.trackpass_mini[iTrk]=(int)trackpass;
+            if( trackpass==1 ){if(TMath::Abs(eta)<2.0) Ntracks++;} 
             myEvent.trackFlagsREC_mini[iTrk] = trackFlagsREC[iTrk];
             myEvent.trackPtREC_mini[iTrk] = pt;
             myEvent.trackEtaREC_mini[iTrk] = eta;
