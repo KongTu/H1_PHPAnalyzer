@@ -1,0 +1,25 @@
+cut number 0 (haveEtag6Trigger) events: 5.89468e+06 sum(weights)=6.14112e+06 +/- 2968.68 effective number of events: 4.27927e+06
+cut number 1 (etag6acceptance) events: 2.5765e+06 sum(weights)=2.68097e+06 +/- 1948.17 effective number of events: 1.89378e+06
+cut number 2 (etag6PLUSphtagLT20) events: 2.54824e+06 sum(weights)=2.65154e+06 +/- 1937.36 effective number of events: 1.87316e+06
+cut number 3 (vertextype) events: 2.52915e+06 sum(weights)=2.6316e+06 +/- 1930.66 effective number of events: 1.85792e+06
+cut number 4 (etaminLT0) events: 2.24275e+06 sum(weights)=2.32923e+06 +/- 1803.76 effective number of events: 1.6675e+06
+cut number 5 (zvertex30) events: 2.05514e+06 sum(weights)=2.13108e+06 +/- 1710.2 effective number of events: 1.55275e+06
+cut number 6 (n(Central)>=15) events: 330687 sum(weights)=341709 +/- 675.276 effective number of events: 256065
+cut number 7 (n(Central|Fwd|FST)>=15) events: 523513 sum(weights)=541039 +/- 845.748 effective number of events: 409237
+
+cut number 0 (haveEtag6Trigger) events: 2.91624e+06 sum(weights)=3.16422e+06 +/- 2047.34 effective number of events: 2.38864e+06
+cut number 1 (etag6acceptance) events: 1.21336e+06 sum(weights)=1.31456e+06 +/- 1319.54 effective number of events: 992475
+cut number 2 (etag6PLUSphtagLT20) events: 1.19663e+06 sum(weights)=1.29629e+06 +/- 1310.97 effective number of events: 977721
+cut number 3 (vertextype) events: 1.18941e+06 sum(weights)=1.28818e+06 +/- 1306.95 effective number of events: 971487
+cut number 4 (etaminLT0) events: 1.10795e+06 sum(weights)=1.1962e+06 +/- 1251.34 effective number of events: 913816
+cut number 5 (zvertex30) events: 1.04632e+06 sum(weights)=1.12916e+06 +/- 1216.24 effective number of events: 861931
+cut number 6 (n(Central)>=15) events: 180413 sum(weights)=193043 +/- 476.895 effective number of events: 163857
+
+cut number 0 (haveEtag6Trigger) events: 1.07909e+07 sum(weights)=1.00679e+08 +/- 267546 effective number of events: 141605
+cut number 1 (etag6acceptance) events: 4.65763e+06 sum(weights)=3.74682e+07 +/- 152298 effective number of events: 60525.1
+cut number 2 (etag6PLUSphtagLT20) events: 4.58259e+06 sum(weights)=3.63741e+07 +/- 147600 effective number of events: 60730.7
+cut number 3 (vertextype) events: 4.57867e+06 sum(weights)=3.61786e+07 +/- 146716 effective number of events: 60806.4
+cut number 4 (etaminLT0) events: 4.37261e+06 sum(weights)=3.19378e+07 +/- 131309 effective number of events: 59159.5
+cut number 5 (zvertex30) events: 4.19936e+06 sum(weights)=2.92904e+07 +/- 122054 effective number of events: 57590.1
+cut number 6 (n(Central)>=15) events: 1.19568e+06 sum(weights)=5.01885e+06 +/- 35262.8 effective number of events: 20257
+cut number 7 (n(Central|Fwd|FST)>=15) events: 1.6662e+06 sum(weights)=7.91373e+06 +/- 48746.1 effective number of events: 26356.2

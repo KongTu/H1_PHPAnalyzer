@@ -1,0 +1,16 @@
+executable = /nfs/dust/h1/group/sschmitt/H1_ForwardMultAnalyzer/batch/h1.run
+transfer_executable = True
+#
+# run on EL7
+Requirements = (OpSysAndVer == "CentOS7")
+#
+JOBNAME = data_06
+INPUTPATH = /pnfs/desy.de/dphep/online/h1/data/oo-4.0/06/
+INPUTPREFIX = 4.0.6.10dst7.c06
+OUTPUTDIR =  /nfs/dust/h1/group/sschmitt/H1_ForwardMultAnalyzer/batch/$(JOBNAME)
+#
+arguments = $(INPUTPATH) $(INPUTPREFIX)$(POSTFIX) $(JOBNAME)_$(POSTFIX).root $(OUTPUTDIR)
+output = $(JOBNAME).$(ClusterId).$(ProcId).out
+error = $(JOBNAME).$(ClusterId).$(ProcId).err
+log = $(JOBNAME).$(ClusterId).log
+queue POSTFIX from $(JOBNAME).list

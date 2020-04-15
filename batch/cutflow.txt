@@ -1,0 +1,22 @@
+High-energy run
+================
+cut number 0 (haveEtag6Trigger) events: 1.04551e+07 sum(weights)=1.00994e+08 +/- 280149 effective number of events: 129961
+cut number 1 (etag6acceptance) events: 4.50668e+06 sum(weights)=3.73489e+07 +/- 158162 effective number of events: 55763.4
+cut number 2 (etag6PLUSphtagLT20) events: 4.43344e+06 sum(weights)=3.62424e+07 +/- 153389 effective number of events: 55827
+cut number 3 (vertextype) events: 4.42895e+06 sum(weights)=3.60228e+07 +/- 152400 effective number of events: 55871.1
+cut number 4 (twoWhfsGTWetag6) events: 3.87842e+06 sum(weights)=2.57399e+07 +/- 114658 effective number of events: 50397.2
+cut number 5 (zvertex30) events: 3.79044e+06 sum(weights)=2.49265e+07 +/- 111258 effective number of events: 50195.2
+cut number 6 (n(Central)>=10) events: 2.29416e+06 sum(weights)=1.24578e+07 +/- 70264.7 effective number of events: 31434.6
+cut number 7 (n(Central|Fwd|FST)>=10) events: 2.68977e+06 sum(weights)=1.54936e+07 +/- 80056.3 effective number of events: 37455.1
+
+
+Low-energy run
+==============
+cut number 0 (haveEtag6Trigger) events: 6.14466e+06 sum(weights)=3.49808e+07 +/- 22451.9 effective number of events: 2.42747e+06
+cut number 1 (etag6acceptance) events: 2.68547e+06 sum(weights)=1.4187e+07 +/- 14430.9 effective number of events: 966472
+cut number 2 (etag6PLUSphtagLT20) events: 2.65622e+06 sum(weights)=1.39966e+07 +/- 14336.2 effective number of events: 953175
+cut number 3 (vertextype) events: 2.6348e+06 sum(weights)=1.37896e+07 +/- 14240.6 effective number of events: 937667
+cut number 4 (twoWhfsGTWetag6) events: 1.96923e+06 sum(weights)=9.0353e+06 +/- 11387.3 effective number of events: 629573
+cut number 5 (zvertex30) events: 1.89063e+06 sum(weights)=8.64881e+06 +/- 11146.5 effective number of events: 602059
+cut number 6 (n(Central)>=10) events: 906021 sum(weights)=3.39208e+06 +/- 6257.9 effective number of events: 293815
+cut number 7 (n(Central|Fwd|FST)>=10) events: 1.13139e+06 sum(weights)=4.4971e+06 +/- 7264.04 effective number of events: 383273

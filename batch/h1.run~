@@ -1,0 +1,67 @@
+#!/bin/zsh
+
+# script to run DST analysis on on batch farm
+# arguments:#   $1  path name
+#   $2  file names
+#   $3  output file name
+#   $4  output directory
+
+if [[ -z $4 ]] ; then
+    echo "usage: h1.run path filenames outputfile outputdir"
+    exit 2
+fi
+
+# analysis directory
+ANALYSIS_DIR=/nfs/dust/h1/group/sschmitt/H1_ForwardMultAnalyzer
+# executable
+EXECUTABLE=chargedForwardODS
+EXECUTABLEDIR=${ANALYSIS_DIR}/bin/amd64_rhel70
+# good runs file
+GOODRUNFILE=${ANALYSIS_DIR}/batch/SelectedRuns_0607-and-lowE.root
+
+# script to be run on the DESY batch farm
+
+# set up H1 environment
+echo "setting up H1 group environment"
+source /etc/groupset.sh h1
+
+# set up environment
+
+cd $ANALYSIS_DIR
+h1oo sv
+
+# check whether tmp dir is set
+if [[ -z ${TMP} ]] ; then
+    echo "TMP is not set, exiting"
+    exit 1
+fi
+
+# copy auxillary files to temporary directory
+rm -rf ${TMP}/run ${TMP}/lib
+mkdir ${TMP}/run
+cd ${TMP}/run
+cp  ${GOODRUNFILE} ./
+
+# hack to load libraries
+mkdir ../lib
+ln -s ${ANALYSIS_DIR}/lib/amd64_rhel70 ../lib/
+
+#set up steering file
+# select event if MC or S1 or S82
+cat <<EOF > ${3}.steer
+H1SteerTree() {
+  fPath = "$1";
+  fFileNames= "$2";
+  fLoadHAT = true;
+  fLoadMODS = true;
+  fHatSelection="(fRunType>0)||(fIl1rw[1]>0)||(fIl1rw[82]>0)||(fIl1rw[86]>0)"; 
+}
+EOF
+
+#  fHatSelection="(fRunType>0)||(fIl1ac[1]>0)||(fIl1ac[82]>0)"; 
+
+
+${EXECUTABLEDIR}/${EXECUTABLE} -f ${3}.steer -o ${3}
+mkdir -p ${4}
+cp ${3}.steer ${4}
+cp ${3} ${4}

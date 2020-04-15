@@ -1,0 +1,17 @@
+data_lowE_S82/data_lowE_0111-0119.root
+data_lowE_S82/data_lowE_0120-0129.root
+data_lowE_S82/data_lowE_0130-0139.root
+data_lowE_S82/data_lowE_0140-0149.root
+data_lowE_S82/data_lowE_0150-0159.root
+data_lowE_S82/data_lowE_0160-0169.root
+data_lowE_S82/data_lowE_0170-0179.root
+data_lowE_S82/data_lowE_0180-0189.root
+data_lowE_S82/data_lowE_0190-0199.root
+data_lowE_S82/data_lowE_0200-0209.root
+data_lowE_S82/data_lowE_0210-0219.root
+data_lowE_S82/data_lowE_0220-0229.root
+data_lowE_S82/data_lowE_0230-0239.root
+data_lowE_S82/data_lowE_0240-0249.root
+data_lowE_S82/data_lowE_0250-0259.root
+data_lowE_S82/data_lowE_0260-0269.root
+data_lowE_S82/data_lowE_0270-0280.root

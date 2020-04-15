@@ -1,0 +1,613 @@
+#include <TFile.h>
+#include <TChain.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TLorentzVector.h>
+#include <TMath.h>
+#include <fstream>
+#include <iostream>
+#include <cmath>
+#include <vector>
+
+#define NTRACKMIN 15
+
+void controlplot(char const *fileListName="fileListLE.txt",
+                 char const *outputName="output_LE.root") {
+   // quick and not very accurate selection of tagged photoproduction
+   // loop high-energy dataset (selected from 06 and 07 positron operation)
+
+   TChain *dataChain;
+   dataChain=new TChain("properties","high energy");
+   ifstream fileList(fileListName);
+   while(!fileList.eof()) {
+      TString fileName;
+      fileList>>fileName;
+      if(fileName.Length()==0) break;
+      dataChain->AddFile(fileName);
+   }
+
+   // trigger selection and event weights
+   Float_t l4weight;
+   Float_t trigWeightRW;
+   Int_t haveEtag6Trigger;
+   dataChain->SetBranchAddress("weight",&l4weight);
+   dataChain->SetBranchAddress("trigWeightRW",&trigWeightRW);
+   dataChain->SetBranchAddress("haveEtag6Trigger",&haveEtag6Trigger);
+   //  haveEtag6Trigger
+   //    0: neither S82 nor S86 have fired
+   //    1: S82 has fired but not S86
+   //    2: S86 has fired but not S82
+   //    3: both S82 and S86 have fired
+   
+   // tagged photoproduction: look at electron tagger and photon tagger
+   //   eTag6pos[0]: reconstucted x-position in tagger surface
+   //     this is correlated with the eTag6Energy
+   //   Because of bacground and not fully contained showers one has to ask for
+   //    abs(etag6pos[0])<3
+   //
+   Float_t eTag6Energy,photonTagEnergy,eTag6pos[2];
+   dataChain->SetBranchAddress("eTag6Energy",&eTag6Energy);
+   dataChain->SetBranchAddress("eTag6pos",eTag6pos);
+   dataChain->SetBranchAddress("photonTagEnergy",&photonTagEnergy);
+
+   // event vertex
+   //   vertexType>0 : there is a reconstructed vertex
+   //   typical vertex cut: abs(vertex[2])<30
+   Int_t primaryVertexFlags;
+   Float_t vertex[3];
+   dataChain->SetBranchAddress("primaryVertexFlags",&primaryVertexFlags);
+   dataChain->SetBranchAddress("primaryVertex",vertex);
+
+   // beam energies
+   //   for nominal operation, the proton energy is 920 GeV
+   //   for low-energy running it is 460 GeV
+   Float_t eProtonBeam,eElectronBeam;
+   dataChain->SetBranchAddress("eProtonBeam",&eProtonBeam);
+   dataChain->SetBranchAddress("eElectronBeam",&eElectronBeam);
+  
+   // total measured final state 4-vector
+   //
+   Float_t eflowREC[4];
+   dataChain->SetBranchAddress("eflowREC",eflowREC);
+   //
+   // measurements of most-backwards particles
+   //  -> to get hold of egamma and related quantities
+   enum {MAX_NBWD=40 };
+   Int_t eflowNbwd;
+   Float_t eflowBwdEtaREC[MAX_NBWD];
+   //Float_t eflowBwdMremnantREC[MAX_NBWD];
+   Float_t eflowBwdxgammaREC[MAX_NBWD];
+   // number of "most backward" particles analyzed
+   // the first particle is a pseudo-particle
+   //   calculated from the etagger and the sum of all final state
+   //   particles
+   //  energy: (Ebeam-Etag)-0.5*(E-pz)_finalState
+   //  pz = - energy
+   //  further particles of the final-state particle are added,
+   // starting with the smallest eta (most backward first)
+   //   [0]  -> pseudo-particle
+   //   [1]  -> most backward particle
+   //   [2]  -> second most backward particle
+   //     ...
+   dataChain->SetBranchAddress("eflowNbwd",&eflowNbwd);
+   // eta of the backwards particle
+   dataChain->SetBranchAddress("eflowBwdEtaREC",eflowBwdEtaREC);
+   // reconstructed xGamma
+   // (from sum of backward particles)
+   dataChain->SetBranchAddress("eflowBwdxgammaREC",eflowBwdxgammaREC);
+
+   // pointer to a certain index in the "backward particle" arrays
+   // to choose an x_gamma reconstruction method
+   Int_t ind_xgamma[3];
+
+   //particles with increasing eta are attributed to the photon remnant
+   //  up to an invariant mass of 3 GeV
+   dataChain->SetBranchAddress("eflowImmax3REC",ind_xgamma+0);
+
+   //particles with increasing eta are attributed to the photon remnant
+   //  the largest delta Eta between remnant 
+   //  and other particles is selected, with the extra condition eta<0
+   dataChain->SetBranchAddress("eflowIdetamaxREC",ind_xgamma+1);
+
+   //all particles with eta<-2 are attributed to the photon remnant
+   dataChain->SetBranchAddress("eflowIminus2REC",ind_xgamma+2);
+
+
+   // charged particles
+   Int_t ntrackREC;
+   enum {
+      ntrackREC_MAX=200
+   };
+   Int_t trackFlagsREC[ntrackREC_MAX];
+   Float_t trackPxREC[ntrackREC_MAX];
+   Float_t trackPyREC[ntrackREC_MAX];
+   Float_t trackPzREC[ntrackREC_MAX];
+   dataChain->SetBranchAddress("ntrackREC",&ntrackREC);
+   dataChain->SetBranchAddress("trackFlagsREC",trackFlagsREC);
+   dataChain->SetBranchAddress("trackPxREC",trackPxREC);
+   dataChain->SetBranchAddress("trackPyREC",trackPyREC);
+   dataChain->SetBranchAddress("trackPzREC",trackPzREC);
+
+   //====================================================================
+   // cut flow plots
+   //  each plot is made with
+   //  [0] (cutflow) all cuts applied in sequence
+   //  [1] (inverted) all cuts applied in sequence,
+   //         but the last cut is inverted
+   //  [2] (relaxed) all cuts applied (no sequence)
+   //         but the cut in question is relaxed
+   //
+   //  Example:
+   //    cutflow[0][0]  -> cut0
+   //    cutflow[0][1]  -> cut0 && cut1
+   //    cutflow[0][2]  -> cut0 && cut1 && cut2
+   //      ...
+   //    cutflow[1][2]  -> cut0 && cut1 && (!cut2)
+   //      ...
+   //    cutflow[2][1]  -> cut0 && (!cut1) && cut2 && ... && cutN
+   //      ...
+   // 
+   static char const *cutflowName[]=
+      {"haveEtag6Trigger",
+       "etag6acceptance",
+       "etag6PLUSphtagLT20",
+       "vertextype",
+       "etaminLT0",
+       "zvertex30",
+       0};
+   vector<TH1 *> hist_etag6E_cutflow[3];
+   vector<TH1 *> hist_etag6X_cutflow[3];
+   vector<TH2 *> hist_etag6EvsX_cutflow[3];
+   vector<TH2 *> hist_etag6YvsX_cutflow[3];
+   vector<TH1 *> hist_phtag_cutflow[3];
+   vector<TH2 *> hist_etag6phtag_cutflow[3];
+   vector<TH1 *> hist_etag6PLUSphtag_cutflow[3];
+   vector<TH1 *> hist_zvertex_cutflow[3];
+   vector<TH1 *> hist_Wetag6_cutflow[3];
+   vector<TH1 *> hist_Whfs_cutflow[3];
+   vector<TH1 *> hist_etamin_cutflow[3];
+   vector<TH2 *> hist_zvertexEtamin_cutflow[3];
+   vector<TH1 *> hist_DeltaW_cutflow[3];
+   vector<TH2 *> hist_WhfsWetag6_cutflow[3];
+   vector<TH1 *> hist_EPZhfs_cutflow[3];
+   vector<TH1 *> hist_EPZtotal_cutflow[3];
+   vector<TH1 *> hist_PThfs_cutflow[3];
+   for(int icut=0;cutflowName[icut];icut++) {
+      TString cutname=TString::Format("%02d",icut)+cutflowName[icut];
+      for(int itype=0;itype<3;itype++) {
+         TString cuttype="CUTFLOW";
+         if(itype==1) cuttype="INVERTED";
+         if(itype==2) cuttype="RELAXED";
+         // energy in e-tagger
+         hist_etag6E_cutflow[itype].push_back
+            (new TH1D("hist_etag6E_"+cutname+cuttype,
+                      ";E(etag6) [GeV]",100.,0.,25.));
+         // X-position in etagger
+         hist_etag6X_cutflow[itype].push_back
+            (new TH1D("hist_etag6X_"+cutname+cuttype,
+                      ";x(etag6) [cm]",100.,-4.,4.));
+         // Energy vs x-position
+         hist_etag6EvsX_cutflow[itype].push_back
+            (new TH2D("hist_etag6EvsX_"+cutname+cuttype,
+                      ";x(etag6) [cm];E(etag6) [GeV]",40,-4.,4.,25.,0.,25.));
+         // Y vs X position
+         hist_etag6YvsX_cutflow[itype].push_back
+            (new TH2D("hist_etag6YvsX_"+cutname+cuttype,
+                      ";x(etag6) [cm];Y(etag6) [cm]",40,-4.,4.,25.,-4.,4.));
+         // energy in photon tagger
+         hist_phtag_cutflow[itype].push_back
+            (new TH1D("hist_phtag_"+cutname+cuttype,
+                      ";E(photonTagger) [GeV]",100.,0.,100.));
+         //  photon vs electron tagger energy
+         hist_etag6phtag_cutflow[itype].push_back
+            (new TH2D("hist_etag6phtag_"+cutname+cuttype,
+                      ";E(etag6);E(photonTagger) [GeV]",
+                      25.,0.,25.,25.,0.,50.));
+         // sum of photon and electron tagger energy
+         hist_etag6PLUSphtag_cutflow[itype].push_back
+            (new TH1D("hist_etag6PLUSphtag_"+cutname+cuttype,
+                      ";E(etag6)+E(photonTagger) [GeV]",100.,0.,100.));
+         //  z(vertex) position
+         hist_zvertex_cutflow[itype].push_back
+            (new TH1D("hist_zvertex_"+cutname+cuttype,
+                      ";z(vertex) [cm]",200.,-100.,100.));
+         // photon-protion centre-of mass energy, calculated from etag6
+         hist_Wetag6_cutflow[itype].push_back
+            (new TH1D("hist_Wetag6_"+cutname+cuttype,
+                      ";W(etag6) [GeV]",150,100.,400.));
+         // photon-proton centre-of mass energy, calculated from final state
+         hist_Whfs_cutflow[itype].push_back
+            (new TH1D("hist_Whfs_"+cutname+cuttype,
+                      ";W(hfs) [GeV]",200,0.,400.));
+         // minimum eta of final state particle
+         hist_etamin_cutflow[itype].push_back
+            (new TH1D("hist_etamin_"+cutname+cuttype,
+                      ";eta_{min}",200,-5,5.));
+         // minimum eta of final state particle vs z-vertex
+         hist_zvertexEtamin_cutflow[itype].push_back
+            (new TH2D("hist_zvertexEtamin_"+cutname+cuttype,
+                      ";eta_{min}",50,-100.,100.,40,-5,5.));
+         // difference of W(etag6) and W(hfs) reconstructed centre-of-mass
+         hist_DeltaW_cutflow[itype].push_back
+            (new TH1D("hist_DeltaW_"+cutname+cuttype,
+                      ";W(etag6)-W(hfs) [GeV]",250,-150.,350.));
+         // correlation plot of W(etag6) and W(hfs)
+         hist_WhfsWetag6_cutflow[itype].push_back
+            (new TH2D("hist_WhfsWetag6_"+cutname+cuttype,
+                      ";W(hfs) [GeV];W(etag6) [GeV]",40,0.,400.,30,100.,400.));
+         //  E-pz of the final state excluding the tagged electron
+         hist_EPZhfs_cutflow[itype].push_back
+            (new TH1D("hist_EPZhfs_"+cutname+cuttype,
+                      ";(E-pz)(hfs) [GeV]",100,0.,100.));
+         // E-pz of the final state including the tagged electron
+         hist_EPZtotal_cutflow[itype].push_back
+            (new TH1D("hist_EPZtotal_"+cutname+cuttype,
+                      ";(E-pz)(hfs+etag) [GeV]",100,0.,100.));
+         // missing transverse momentum of the final state
+         hist_PThfs_cutflow[itype].push_back
+            (new TH1D("hist_PThfs_"+cutname+cuttype,
+                      ";P_{T,miss}(hfs) [GeV]",100,0.,50.));
+      }
+   }
+
+   // reconstructed xgamma
+   TH1 *hist_xgamma[3];
+   for(int type=0;type<3;type++) {
+      hist_xgamma[type]=new TH1D(TString::Format("hist_xgamma%d",type),
+                                 ";x_{#gamma}",101,0.,1.01);
+   }
+   // other (non-cut-flow) histograms
+
+   // track based quantities:
+   // [0] all
+   // [1] direct-enriched
+   // [2] resolved enriched
+
+   TH1 *hist_trackMult_cent[3];
+   TH1 *hist_trackMult_all[3];
+   TH2 *hist_DetaDphi_cent[3];
+   TH2 *hist_DetaDphi_all[3];
+   TH1 *hist_eta_cent[3];
+   TH1 *hist_eta_all[3];
+   TH1 *hist_eta_type[5];
+   
+   for(int type=0;type<3;type++) {
+      hist_trackMult_cent[type]=new TH1D
+         (TString::Format("hist_trackMult_cent%d",type),";n(track)",100,-0.5,99.5);
+      hist_trackMult_all[type]=new TH1D
+         (TString::Format("hist_trackMult_all%d",type),";n(track)",100,-0.5,99.5);
+      hist_DetaDphi_cent[type]=new TH2D
+         (TString::Format("hist_DetaDphi_cent%d",type),";#Delta#eta;#Delta#phi",
+          21,-3.5,3.5,30,-0.5*M_PI,1.5*M_PI);
+      hist_DetaDphi_all[type]=new TH2D
+         (TString::Format("hist_DetaDphi_all%d",type),";#Delta#eta;#Delta#phi",
+          27,-4.5,4.5,30,-0.5*M_PI,1.5*M_PI);
+      hist_eta_cent[type]=new TH1D
+         (TString::Format("hist_eta_cent%d",type),";#eta",27*9,-3.5,5.5);
+      hist_eta_all[type]=new TH1D
+         (TString::Format("hist_eta_all%d",type),";#eta",  27*9,-3.5,5.5);
+   }
+   for(int type=0;type<5;type++) {
+      hist_eta_type[type]=new TH1D
+         (TString::Format("hist_eta_type%d",type),";#eta",  27*9,-3.5,5.5);
+   }
+
+   //============================== event loop ============================
+
+   vector<double> phiTrackCent,etaTrackCent;
+   vector<double> phiTrackAll,etaTrackAll;
+   phiTrackCent.reserve(ntrackREC_MAX);
+   etaTrackCent.reserve(ntrackREC_MAX);
+   phiTrackAll.reserve(ntrackREC_MAX);
+   etaTrackAll.reserve(ntrackREC_MAX);
+
+
+   Long_t nEntries=dataChain->GetEntries();
+   int nCut=hist_etag6E_cutflow[0].size();
+   vector<bool> cutflow(nCut);
+   vector<double> nEvent(nCut+6),sumW(nCut+6),sumW2(nCut+6);
+   size_t CUT_NCENT=nCut;
+   size_t CUT_NALL=nCut+3;
+   for(Long_t i=0;i<nEntries;i++) {
+      if((i %100000)==0) cout<<i<<"/"<<nEntries<<"\n";
+      dataChain->GetEntry(i);
+      //================== event variables used for cuts
+      // total 4-vector, including the particle detected as scattered electron
+      TLorentzVector hfs(eflowREC[0],eflowREC[1],eflowREC[2],eflowREC[3]);
+      // calculate gamma-proton entre-of-mass energy from HFS
+      double W_hfs=TMath::Sqrt(2.*(hfs.E()-hfs.Pz())*eProtonBeam);
+      // calculate gamma-proton energy from tagged electron
+      double W_etag6=TMath::Sqrt(4.*(eElectronBeam-eTag6Energy)*eProtonBeam);
+
+      // etamin of final state particles
+      double etaMin=HUGE_VAL;
+      if(eflowNbwd>1) etaMin=eflowBwdEtaREC[1];
+
+      //================== evaluate cuts for cut-flow studies
+      cutflow[0]=(haveEtag6Trigger&1)!=0;
+      //cutflow[1]=(TMath::Abs(eTag6pos[0])<3.);
+      cutflow[1]=(eTag6pos[0]+0.4*eTag6Energy>0.)&&(TMath::Abs(eTag6pos[0])<3.);
+      cutflow[2]=eTag6Energy+photonTagEnergy<20.;
+      cutflow[3]= primaryVertexFlags>0;
+      cutflow[4]=etaMin <0.;
+      cutflow[5]=TMath::Abs(vertex[2])<30.;
+      
+      // event weight: L4 weight times prescale compensation weight
+      double weight=l4weight*trigWeightRW;
+
+      // xgamma estimator
+      double x_gamma= eflowBwdxgammaREC[ind_xgamma[2]];
+
+      bool cutSequence=true;
+      for(size_t icut=0;icut<cutflow.size();icut++) {
+         bool allButThis=cutSequence;
+         for(size_t jcut=icut+1;jcut<cutflow.size();jcut++) {
+            allButThis &= cutflow[jcut];
+         }
+         bool typeCut[3];
+         typeCut[1]=cutSequence && !cutflow[icut]; // cutflow,this cut inverted
+         cutSequence &= cutflow[icut];  // cutflow, this cut applied
+         typeCut[0]=cutSequence;
+         typeCut[2]=allButThis;  // all cuts, this cut relaxed
+         if(cutSequence) {
+            nEvent[icut]++;
+            sumW[icut]+=weight;
+            sumW2[icut]+=weight*weight;
+         }
+
+         for(int itype=0;itype<3;itype++) {
+            if(!typeCut[itype]) continue;
+            hist_etag6E_cutflow[itype][icut]->Fill(eTag6Energy,weight);
+            hist_etag6X_cutflow[itype][icut]->Fill(eTag6pos[0],weight);
+            hist_etag6EvsX_cutflow[itype][icut]->Fill(eTag6pos[0],eTag6Energy,weight);
+            hist_etag6YvsX_cutflow[itype][icut]->Fill(eTag6pos[0],eTag6pos[1],weight);
+            hist_phtag_cutflow[itype][icut]->Fill(photonTagEnergy,weight);
+            hist_etag6phtag_cutflow[itype][icut]->Fill
+               (eTag6Energy,photonTagEnergy,weight);
+            hist_etag6PLUSphtag_cutflow[itype][icut]->Fill
+               (eTag6Energy+photonTagEnergy,weight);
+            hist_zvertex_cutflow[itype][icut]->Fill(vertex[2],weight);
+            hist_Wetag6_cutflow[itype][icut]->Fill(W_etag6,weight);
+            hist_Whfs_cutflow[itype][icut]->Fill(W_hfs,weight);
+            hist_etamin_cutflow[itype][icut]->Fill(etaMin,weight);
+            hist_zvertexEtamin_cutflow[itype][icut]->Fill(vertex[2],etaMin,weight);
+            hist_DeltaW_cutflow[itype][icut]->Fill(W_etag6-W_hfs,weight);
+            hist_WhfsWetag6_cutflow[itype][icut]->Fill
+               (W_hfs,W_etag6,weight);
+            hist_EPZhfs_cutflow[itype][icut]->Fill(hfs.E()-hfs.Pz(),weight);
+            hist_PThfs_cutflow[itype][icut]->Fill(hfs.Pt(),weight);
+            hist_EPZtotal_cutflow[itype][icut]->Fill
+               (hfs.E()-hfs.Pz()+2.*eTag6Energy,weight);
+         }
+         // apply cuts sequentially
+      }
+
+      //===================================================================
+      // after this point, keep only those events which survive all cuts
+      if(!cutSequence) continue;
+
+      // to do: require at least one high PT track (pt>0.9 GeV)
+
+      
+      // direct or resolved enriched sample
+      int igammax=(x_gamma<0.5)?2:1;
+
+      // track selection
+      phiTrackCent.resize(0);
+      etaTrackCent.resize(0);
+      phiTrackAll.resize(0);
+      etaTrackAll.resize(0);
+      for(int iTrk=0;iTrk<ntrackREC;iTrk++) {
+         int type=trackFlagsREC[iTrk];
+         if(!type) continue;
+         double pt=TMath::Hypot(trackPxREC[iTrk],trackPyREC[iTrk]);
+         if(pt<0.100) continue; // pt>100 MeV
+         double p=TMath::Hypot(trackPzREC[iTrk],pt);
+         double phi=TMath::ATan2(trackPyREC[iTrk],trackPxREC[iTrk]);
+         double eta=0.5*TMath::Log((p+trackPzREC[iTrk])/(p-trackPzREC[iTrk]));
+         // only central tracks
+         if(type==1) {
+            phiTrackCent.push_back(phi);
+            etaTrackCent.push_back(eta);
+         }
+         // central plus combined plus forward tracks plus FST
+         if(type<=4) {
+            phiTrackAll.push_back(phi);
+            etaTrackAll.push_back(eta);    
+         }
+         hist_eta_type[type]->Fill(eta,weight);
+      }
+
+      for(int type=0;type<3;type++) {
+         hist_xgamma[type]->Fill(eflowBwdxgammaREC[ind_xgamma[type]],weight);
+      }
+
+      hist_trackMult_cent[0]->Fill((double)phiTrackCent.size(),weight);
+      hist_trackMult_all[0]->Fill((double)phiTrackAll.size(),weight);
+
+      hist_trackMult_cent[igammax]->Fill((double)phiTrackCent.size(),weight);
+      hist_trackMult_all[igammax]->Fill((double)phiTrackAll.size(),weight);
+
+
+      //=========================== central tracks =====================
+
+      if(phiTrackCent.size()>=NTRACKMIN) {
+
+         // double-loop over tracks from this event
+         for(size_t itk=0;itk<phiTrackCent.size();itk++) {
+            // eta distribution
+            hist_eta_cent[0]->Fill(etaTrackCent[itk],weight);
+            hist_eta_cent[igammax]->Fill(etaTrackCent[itk],weight);
+            for(size_t jtk=0;jtk<phiTrackCent.size();jtk++) {
+               if(itk==jtk) continue;
+               double dphi=phiTrackCent[itk]-phiTrackCent[jtk];
+               // bring phi to range -1.5*pi <phi< 0.5*pi
+               dphi=remainder(dphi-0.5*M_PI,2.*M_PI)+0.5*M_PI;
+               double deta=etaTrackCent[itk]-etaTrackCent[jtk];
+               // histogram delta(phi) vs delta(eta)
+               hist_DetaDphi_cent[0]->Fill(deta,dphi,weight);
+               hist_DetaDphi_cent[igammax]->Fill(deta,dphi,weight);
+            }
+         }
+         nEvent[CUT_NCENT]++;
+         sumW[CUT_NCENT]+=weight;
+         sumW2[CUT_NCENT]+=weight*weight;
+         nEvent[CUT_NCENT+igammax]++;
+         sumW[CUT_NCENT+igammax]+=weight;
+         sumW2[CUT_NCENT+igammax]+=weight*weight;
+
+      }
+      //=========================== central+fwd+FST tracks ================
+
+      if(phiTrackAll.size()>=NTRACKMIN) {
+         // double-loop over tracks from this event
+         for(size_t itk=0;itk<phiTrackAll.size();itk++) {
+            // eta-distribution
+            hist_eta_all[0]->Fill(etaTrackAll[itk],weight);
+            hist_eta_all[igammax]->Fill(etaTrackAll[itk],weight);
+            for(size_t jtk=0;jtk<phiTrackAll.size();jtk++) {
+               if(itk==jtk) continue;
+               double dphi=phiTrackAll[itk]-phiTrackAll[jtk];
+               // bring phi to range -3/4*pi <phi< 1/4*pi
+               dphi=remainder(dphi-0.5*M_PI,2.*M_PI)+0.5*M_PI;
+               double deta=etaTrackAll[itk]-etaTrackAll[jtk];
+               // histogram delta(phi) vs delta(eta) 
+               hist_DetaDphi_all[0]->Fill(deta,dphi,weight);
+               hist_DetaDphi_all[igammax]->Fill(deta,dphi,weight);
+            }
+         }
+         nEvent[CUT_NALL]++;
+         sumW[CUT_NALL]+=weight;
+         sumW2[CUT_NALL]+=weight*weight;
+         nEvent[CUT_NALL+igammax]++;
+         sumW[CUT_NALL+igammax]+=weight;
+         sumW2[CUT_NALL+igammax]+=weight*weight;
+      }
+   }
+
+   TFile *output=new TFile(outputName,"recreate");
+   for(int itype=0;itype<3;itype++) {
+      for(size_t icut=0;icut<hist_etag6E_cutflow[itype].size();icut++) {
+         hist_etag6E_cutflow[itype][icut]->Write();
+         hist_etag6X_cutflow[itype][icut]->Write();
+         hist_etag6EvsX_cutflow[itype][icut]->Write();
+         hist_etag6YvsX_cutflow[itype][icut]->Write();
+         hist_phtag_cutflow[itype][icut]->Write();
+         hist_etag6phtag_cutflow[itype][icut]->Write();
+         hist_etag6PLUSphtag_cutflow[itype][icut]->Write();
+         hist_zvertex_cutflow[itype][icut]->Write();
+         hist_Wetag6_cutflow[itype][icut]->Write();
+         hist_Whfs_cutflow[itype][icut]->Write();
+         hist_etamin_cutflow[itype][icut]->Write();
+         hist_zvertexEtamin_cutflow[itype][icut]->Write();
+         hist_DeltaW_cutflow[itype][icut]->Write();
+         hist_WhfsWetag6_cutflow[itype][icut]->Write();
+         hist_EPZhfs_cutflow[itype][icut]->Write();
+         hist_EPZtotal_cutflow[itype][icut]->Write();
+         hist_PThfs_cutflow[itype][icut]->Write();
+      }
+   }
+   for(size_t icut=0;icut<cutflow.size()+6;icut++) {
+      cout<<"cut number "<<icut<<" (";
+      if(icut<cutflow.size()) cout<<cutflowName[icut];
+      else if(icut==CUT_NCENT) cout<<"n(Central)>="<<NTRACKMIN;
+      else if(icut==CUT_NCENT+1) cout<<"n(Central,direct)>="<<NTRACKMIN;
+      else if(icut==CUT_NCENT+2) cout<<"n(Central,resolved)>="<<NTRACKMIN;
+      else if(icut==CUT_NALL) cout<<"n(Central|Fwd|FST)>="<<NTRACKMIN;
+      else if(icut==CUT_NALL+1) cout<<"n(Central|Fwd|FST,direct)>="<<NTRACKMIN;
+      else if(icut==CUT_NALL+2) cout<<"n(Central|Fwd|FST,resolved)>="<<NTRACKMIN;
+      cout<<") events: "<<nEvent[icut]<<" sum(weights)="<<sumW[icut]
+          <<" +/- "<<sqrt(sumW2[icut])
+          <<" effective number of events: "<<sumW[icut]*sumW[icut]/sumW2[icut]
+          <<"\n";
+   }
+
+   for(int type=0;type<3;type++) {
+      hist_xgamma[type]->Write();
+   }
+
+   for(int type=0;type<3;type++) {
+      hist_trackMult_cent[type]->Write();
+      hist_trackMult_all[type]->Write();
+      hist_DetaDphi_cent[type]->Write();
+      hist_DetaDphi_all[type]->Write();
+      hist_eta_cent[type]->Write();
+      hist_eta_all[type]->Write();
+   }
+
+   // normalized histograms
+
+   // average number of events per bin
+   //  ntrack*(ntrack-1)*sumOfWeights/nBinDeta/nBinPhi
+
+   //  fold eta with itself
+   ///   (ntrack*sumOfweights)**2 /nBinDeta
+   //  -> factor:  nBinDeta/nBinPhi/sumOfWeights
+
+   // But the eta histogram is wider than the track eta distribution
+   // while the deta histogram is about the size of the deta distributions
+   // -> use the ratio of bin widths rather than nBinEta
+   //
+   // factor = 1/nBinPhi/sumOfWeights
+   for(int type=0;type<3;type++) {
+      TH1 *hist_DetaDphiNorm_cent=
+         (TH1 *)hist_DetaDphi_cent[type]->Clone
+         (TString::Format("hist_DetaDphiNorm_cent%d",type));
+      vector<double> normDeta_cent(hist_DetaDphiNorm_cent->GetNbinsX());
+      for(int iEta=1;iEta<=hist_eta_cent[type]->GetNbinsX();iEta++) {
+         for(int jEta=1;jEta<=hist_eta_cent[type]->GetNbinsX();jEta++) {
+            double deta=hist_eta_cent[type]->GetBinCenter(iEta)-
+               hist_eta_cent[type]->GetBinCenter(jEta);
+            size_t detaBin=hist_DetaDphiNorm_cent->GetXaxis()->FindBin(deta)-1;
+            if((detaBin>=0)&&(detaBin<normDeta_cent.size())) {
+               normDeta_cent[detaBin] +=
+                  hist_eta_cent[type]->GetBinContent(iEta)*
+                  hist_eta_cent[type]->GetBinContent(jEta);
+            }
+         }
+      }
+      for(int iEta=1;iEta<=hist_DetaDphiNorm_cent->GetNbinsX();iEta++) {
+         double scale=sumW[CUT_NCENT+type]/normDeta_cent[iEta-1]*
+            hist_DetaDphiNorm_cent->GetNbinsY();
+         for(int iPhi=1;iPhi<=hist_DetaDphiNorm_cent->GetNbinsY();iPhi++) {
+            double c=hist_DetaDphiNorm_cent->GetBinContent(iEta,iPhi);
+            double e=hist_DetaDphiNorm_cent->GetBinError(iEta,iPhi);
+            hist_DetaDphiNorm_cent->SetBinContent(iEta,iPhi,c*scale);
+            hist_DetaDphiNorm_cent->SetBinError(iEta,iPhi,e*scale);
+         }
+      }
+      hist_DetaDphiNorm_cent->Write(); 
+   }
+   for(int type=0;type<3;type++) {
+      TH1 *hist_DetaDphiNorm_all=
+         (TH1 *)hist_DetaDphi_all[type]->Clone
+         (TString::Format("hist_DetaDphiNorm_all%d",type));
+      vector<double> normDeta_all(hist_DetaDphiNorm_all->GetNbinsX());
+      for(int iEta=1;iEta<=hist_eta_all[type]->GetNbinsX();iEta++) {
+         for(int jEta=1;jEta<=hist_eta_all[type]->GetNbinsX();jEta++) {
+            double deta=hist_eta_all[type]->GetBinCenter(iEta)-
+               hist_eta_all[type]->GetBinCenter(jEta);
+            size_t detaBin=hist_DetaDphiNorm_all->GetXaxis()->FindBin(deta)-1;
+            if((detaBin>=0)&&(detaBin<normDeta_all.size())) {
+               normDeta_all[detaBin] += hist_eta_all[type]->GetBinContent(iEta)*
+                  hist_eta_all[type]->GetBinContent(jEta);
+            }
+         }
+      }
+      for(int iEta=1;iEta<=hist_DetaDphiNorm_all->GetNbinsX();iEta++) {
+         double scale=sumW[CUT_NALL+type]/normDeta_all[iEta-1]*
+            hist_DetaDphiNorm_all->GetNbinsY();
+         for(int iPhi=1;iPhi<=hist_DetaDphiNorm_all->GetNbinsY();iPhi++) {
+            double c=hist_DetaDphiNorm_all->GetBinContent(iEta,iPhi);
+            double e=hist_DetaDphiNorm_all->GetBinError(iEta,iPhi);
+            hist_DetaDphiNorm_all->SetBinContent(iEta,iPhi,c*scale);
+            hist_DetaDphiNorm_all->SetBinError(iEta,iPhi,e*scale);
+         }
+      }
+      hist_DetaDphiNorm_all->Write();
+   }
+   for(int type=0;type<5;type++) {
+      hist_eta_type[type]->Write();
+   }
+   delete output;
+}
