@@ -1,0 +1,18 @@
+// Steering file used for read_usertree.
+//
+// Last update: $Date: 2005/10/02 16:59:58 $
+// by         : $Author: flucke $
+
+H1SteerTree() 
+{
+// HAT, MODS and USER files created by 'oosubset -f write_usertree.steer':
+  fHatFiles  = "hat.usertreesubset.root";
+  fModsFiles = "mods.usertreesubset.root";
+  fUserFiles = "user.usertreesubset.root";
+
+// User event class and tree name as defined in 'write_usertree.steer',
+// note that the executable has to be linked to 'libUser.so' which contains
+// the 'UserEvent':
+  fUserEventClass = "UserEvent";
+  fUserTreeName   = "USER";
+}

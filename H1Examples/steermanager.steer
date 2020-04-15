@@ -1,0 +1,25 @@
+// Incorrect Statement
+// this is just a test of syntax
+H1SteerTree() {
+// this way, specified files are opened
+    fModsFiles="inputMODS1.root,inputMODS2.root,inputMODS3.root";
+    fHatFiles="inputHAT1.root,inputHAT2.root,inputHAT3.root";
+}
+
+// you can give steering objects names
+// this way you can have more than one steering object of the same class
+// doesn't make much sense with the H1Tree steering, but for example one
+// could run algorithms twice, each time with different steerings
+H1SteerTree("otherfiles") {
+// this way, specified files are opened
+// other possibility would be to use the runcatalog
+    fModsFiles="MODS1.root,MODS2.root";
+    fHatFiles="HAT1.root,HAT2.root";
+}
+
+    // what happens here?
+H1SteerMe() { foo = bar; }
+
+H1SteerBlafasel()   {
+    empty = leer; // this is a comment!
+}

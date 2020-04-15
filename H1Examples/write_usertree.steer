@@ -1,0 +1,33 @@
+// This is an example steering file to produce a usertree using the program
+// 'oosubset'.
+// Note that it is possible to make a HAT selection: Then the subset of MODS
+// and HAT as well as the produced USER tree contain only events passing the
+// selection.
+// The filling class (here "UserFiller") may access ODS which is loaded
+// on-the-fly then, as usual.
+//
+// Usage:
+// oosubset -f write_usertree.steer -n 100
+// The option '-n 100' is of course optional and stops after 100 events.
+// 
+
+H1SteerTree() 
+{
+  fHatFiles  = "/acs/data/oo-4.0/04/hat.4.0.6.10dst7.c040040.root";
+  fModsFiles  = "/acs/data/oo-4.0/04/mods.4.0.6.10dst7.c040040.root";
+  fHatSelection = "Q2e > 2";
+}
+
+H1SteerOosubset()
+{
+  fOutputHat  = "hat.usertreesubset.root";   // HAT  file to write
+  fOutputMods = "mods.usertreesubset.root";  // MODS file to write
+
+  fOutputUserFill = "user.usertreesubset.root"; // USER file to create
+
+  fUserLibs = "libUser.so"; // shared library containing classes UserEvent and UserFiller
+
+  fUserTreeName   = "USER";       // name given to usertree
+  fUserEventClass = "UserEvent";  // name of class defining user tree data structure
+  fUserFillerClass= "UserFiller"; // name of class to fill user tree
+}

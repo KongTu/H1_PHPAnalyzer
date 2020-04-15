@@ -1,0 +1,42 @@
+H1SteerTree("Data"){
+
+  // Directory of files
+  fPath           = "/user/southd/";
+
+  // Tree flags
+  fLoadHAT         = true;
+  fLoadMODS        = true;
+  fLoadODS         = false;
+  fLoadUserTree    = false;
+
+  // Name of files
+  fFileNames = "3.3.6..h1.root.checkout.oo-releases.test-samples.data00.NC.00.index,
+                3.3.6..h1.root.checkout.oo-releases.test-samples.data00.NC.01.index,
+                3.3.6..h1.root.checkout.oo-releases.test-samples.data00.NC.02.index";
+}
+
+
+
+H1SteerTree("Model"){
+
+  // Directory of files
+  fPath           = "/user/southd/";
+  
+  // Tree flags
+  fLoadHAT         = true;
+  fLoadMODS        = true;
+  fLoadODS         = false;
+  fLoadUserTree    = false;
+
+  // Luminosity for these files
+  fLumi           = 50.63; 
+
+  // Mean of Z-Vertex for z-vertex reweight (should only be set for MC)
+  fZVertexMean    =  0.0;       
+  fZVertexSigma   =  15.0;
+
+  // Name of files
+  fFileNames = "3.3.6.django62.99.MRSH_NC_POSI920_Q60_W500.S30910.R90403.DST.A00-A11";
+
+  fUsingSystematics = 0; ///  fUsingSystematics = 1;
+}                     

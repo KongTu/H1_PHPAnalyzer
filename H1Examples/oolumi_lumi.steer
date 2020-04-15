@@ -1,0 +1,28 @@
+H1SteerOolumi()
+{
+  fFirstRun   = 244968;
+  fLastRun    = 279215;
+
+  fSubTrigs   = "0,3"; // selected sub triggers
+  fMinRunLumi = 0.1;   // minimal lumi required per run
+
+// switch sub detectors on, for a list of all detectors have a 
+// look at H1SteerOolumi.h
+  fCJC1       = 1;
+  fCJC2       = 1;
+  fLAR        = 1;
+  fTOF        = 1;
+  fLUMI       = 1;
+  fCIP        = 1;
+  fCOP        = 1;
+
+  fZ0         = 2.8;
+  fDZ         = 35;
+}
+
+
+
+
+
+
+

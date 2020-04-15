@@ -1,0 +1,28 @@
+The package H1Examples contains executables described in
+the H1OO Analysis Primer (cf. https://www-h1.desy.de/icas/oop/):
+
+clusters_ods
+kaonfind_ods
+jpsi_mods
+dstar_mods
+read_usertree
+write_usertree
+empz_hat
+read_ods
+write_eventlist
+create_eventlist
+reuse_eventlist
+
+
+More advanced examples are:
+
+steermanager
+rerun_finder
+
+
+To compile and link all programs:
+
+  gmake all
+
+and you'll find the executables in $(BINDIR).
+
