@@ -277,8 +277,8 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
             double theta = vect.Theta();  
             int trackpass=1;
             if(type==1){//central tracks
-               if(TMath::Abs(trackDCAprimeREC[iTrk]*TMath::Sin(theta))>2.) trackpass=0;
-               if( trackStartRadREC[iTrk]>50. ) trackpass=0;
+               if(TMath::Abs(trackDCAprimeREC[iTrk]*TMath::Sin(theta))>0.2) trackpass=0;
+               if( trackStartRadREC[iTrk]>5. ) trackpass=0;
                if((trackEndRadREC[iTrk]-trackStartRadREC[iTrk])<5.) trackpass=0;
             }
             else if(type==2){//combined tracks
