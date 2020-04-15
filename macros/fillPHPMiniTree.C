@@ -243,14 +243,14 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
          myEvent.eTag6pos_mini[1] = eTag6pos[1];
          myEvent.W_hfs_mini = W_hfs;
          myEvent.W_etag6_mini = W_etag6;
-         for(int i=0;i<7;i++){
-            myEvent.eventpass_mini[i] = 0;
+         for(int icut=0;icut<7;icut++){
+            myEvent.eventpass_mini[icut] = 0;
          }
          if( cutflow[0] && cutflow[1] && cutflow[2] && cutflow[3]
          && cutflow[4] && cutflow[5] ) {
             myEvent.eventpass_mini[0] = 1;}
-         for(int i=0;i<6;i++){
-            if( cutflow[i] ) myEvent.eventpass_mini[i+1] = 1;
+         for(int icut=0;icut<6;icut++){
+            if( cutflow[icut] ) myEvent.eventpass_mini[icut+1] = 1;
          }
          myEvent.etaMin_mini = etaMin;
          //3 different method of xgamma reconstruction
