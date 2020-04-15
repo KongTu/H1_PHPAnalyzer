@@ -291,7 +291,10 @@ void fillPHPMiniTree(const int start = 0, int end = -1) {
                //don't cut on FST tracks for now.
                trackpass=1;
             }
-            myEvent.trackpass_mini[iTrk]=(int)trackpass;
+            cout << "trackpass " << trackpass << endl;
+            cout << "trackStartRadREC[iTrk] " << trackStartRadREC[iTrk] << endl;
+            myEvent.trackpass_mini[iTrk] = trackpass;
+            
             if( trackpass==1 ){if(TMath::Abs(eta)<2.0) Ntracks++;} 
             myEvent.trackFlagsREC_mini[iTrk] = trackFlagsREC[iTrk];
             myEvent.trackPtREC_mini[iTrk] = pt;
